@@ -1,41 +1,28 @@
-import requests
-import time
+import csv
+import os
 from datetime import datetime
-from logger import log_result
 
-URLS = [
-    "https://google.com",
-    "https://example.com"
-]
+FILE_NAME = "monitor_log.csv"
 
-CHECK_INTERVAL = 60  # seconds
+def log_result(url, status, latency, error=""):
+    file_exists = os.path.isfile(FILE_NAME)
 
-def check_site(url):
-    try:
-        start = time.time()
-        response = requests.get(url, timeout=10)
-        latency = round(time.time() - start, 2)
+    with open(FILE_NAME, mode="a", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
 
-        status = response.status_code
+        if not file_exists:
+            writer.writerow([
+                "timestamp",
+                "url",
+                "status",
+                "latency_seconds",
+                "error"
+            ])
 
-        if status == 200:
-            print(f"[{datetime.now()}] ✅ {url} UP | {latency}s")
-            log_result(url, "UP", latency)
-        else:
-            print(f"[{datetime.now()}] ⚠️ {url} DOWN | Status: {status}")
-            log_result(url, "DOWN", latency, f"Status {status}")
-
-    except Exception as e:
-        print(f"[{datetime.now()}] ❌ {url} ERROR | {e}")
-        log_result(url, "ERROR", "", str(e))
-
-
-if __name__ == "__main__":
-    print("🚀 Website Monitor Started...\n")
-
-    while True:
-        for site in URLS:
-            check_site(site)
-
-        print("-" * 50)
-        time.sleep(CHECK_INTERVAL)
+        writer.writerow([
+            datetime.now().isoformat(),
+            url,
+            status,
+            latency,
+            error
+        ])
